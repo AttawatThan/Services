@@ -1,0 +1,5 @@
+# Deny by default so secrets and runtime bind mounts cannot enter the image.
+**
+!Dockerfile
+!requirements.txt
+!requirements-openmetadata.txt

@@ -1,0 +1,19 @@
+Port 22
+
+HostKey /etc/ssh/keys/ssh_host_ed25519_key
+
+PermitRootLogin no
+PasswordAuthentication yes
+KbdInteractiveAuthentication no
+PubkeyAuthentication no
+PermitEmptyPasswords no
+X11Forwarding no
+AllowTcpForwarding no
+AllowAgentForwarding no
+PermitTunnel no
+
+Subsystem sftp internal-sftp
+
+Match Group sftp_users
+    ChrootDirectory /home/%u
+    ForceCommand internal-sftp -d /upload -u 0002

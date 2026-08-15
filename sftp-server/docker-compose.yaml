@@ -1,0 +1,16 @@
+services:
+  sftp:
+    image: local/sftp-server:1.0.0
+    build: .
+    ports:
+      - "${SFTP_PORT:-2222}:22"
+    environment:
+      SFTP_USER: ${SFTP_USER:-sftpuser}
+      SFTP_PASSWORD: ${SFTP_PASSWORD:?Set SFTP_PASSWORD in .env}
+    volumes:
+      - ./data:/home/${SFTP_USER:-sftpuser}/upload
+      - host-keys:/etc/ssh/keys
+    restart: unless-stopped
+
+volumes:
+  host-keys:

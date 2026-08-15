@@ -1,0 +1,12 @@
+# Required by AIRFLOW__CORE__AUTH_MANAGER in docker-compose.yaml.
+apache-airflow-providers-fab==3.6.4
+
+# Runtime lineage integration for Airflow 3.2.2. This exact version is pinned
+# by the official Airflow 3.2.2 / Python 3.10 constraints file.
+apache-airflow-providers-openlineage==2.17.0
+
+# Required by the postgresql+psycopg2 metadata database connection.
+psycopg2-binary==2.9.12
+
+# Required by Airflow's asynchronous PostgreSQL metadata database connection.
+asyncpg==0.31.0

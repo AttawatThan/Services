@@ -1,0 +1,3 @@
+# Keep the four-part Python package release aligned with OpenMetadata server 1.13.3.
+# REST/OpenAPI ingestion is included in the base package and has no extra.
+openmetadata-ingestion[postgres,kafka,s3]==1.13.3.0
