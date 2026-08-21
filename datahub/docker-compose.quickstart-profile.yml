@@ -63,11 +63,13 @@ services:
       DATAHUB_TOKEN_SERVICE_SALT: ${DATAHUB_TOKEN_SERVICE_SALT}
       DATAHUB_TOKEN_SERVICE_SIGNING_KEY: ${DATAHUB_TOKEN_SERVICE_SIGNING_KEY}
       DATAHUB_UPGRADE_HISTORY_KAFKA_CONSUMER_GROUP_ID: generic-duhe-consumer-job-client-gms
-      EBEAN_DATASOURCE_DRIVER: com.mysql.jdbc.Driver
-      EBEAN_DATASOURCE_HOST: mysql:3306
-      EBEAN_DATASOURCE_PASSWORD: datahub
-      EBEAN_DATASOURCE_URL: jdbc:mysql://mysql:3306/datahub?verifyServerCertificate=false&useSSL=true&useUnicode=yes&characterEncoding=UTF-8&enabledTLSProtocols=TLSv1.2
-      EBEAN_DATASOURCE_USERNAME: root
+      DATAHUB_MESSAGING_TRANSPORT: kafka
+      EBEAN_DATASOURCE_DRIVER: org.postgresql.Driver
+      EBEAN_DATASOURCE_HOST: postgres:5432
+      EBEAN_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-datahub}
+      EBEAN_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-datahub}
+      EBEAN_DATASOURCE_USERNAME: ${POSTGRES_USER:-datahub}
+      EBEAN_POSTGRES_USE_AWS_IAM_AUTH: 'false'
       ELASTICSEARCH_HOST: search
       ELASTICSEARCH_IMPLEMENTATION: opensearch
       ELASTICSEARCH_INDEX_BUILDER_MAPPINGS_REINDEX: 'true'
@@ -144,7 +146,7 @@ services:
       protocol: tcp
     - mode: ingress
       target: 4319
-      published: '4319'
+      published: ${DATAHUB_MAPPED_GMS_MANAGEMENT_PORT:-4319}
       protocol: tcp
     volumes:
     - type: bind
@@ -247,7 +249,7 @@ services:
 
       /etc/confluent/docker/run
     environment:
-      KAFKA_ADVERTISED_LISTENERS: BROKER://broker:29092,EXTERNAL://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: BROKER://broker:29092,EXTERNAL://localhost:${DATAHUB_MAPPED_KAFKA_PORT:-9092}
       KAFKA_BROKER_ID: '1'
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
@@ -279,14 +281,14 @@ services:
     ports:
     - mode: ingress
       target: 9092
-      published: '9092'
+      published: ${DATAHUB_MAPPED_KAFKA_PORT:-9092}
       protocol: tcp
     volumes:
     - type: volume
       source: broker
       target: /var/lib/kafka/data
       volume: {}
-  mysql:
+  postgres:
     profiles:
     - quickstart
     - quickstart-backend
@@ -305,38 +307,33 @@ services:
     - debug-elasticsearch
     - debug-backend-aws
     - debug-aws
-    command:
-    - --character-set-server=utf8mb4
-    - --collation-server=utf8mb4_bin
-    - --default-authentication-plugin=caching_sha2_password
     environment:
-      MYSQL_DATABASE: datahub
-      MYSQL_PASSWORD: datahub
-      MYSQL_ROOT_HOST: '%'
-      MYSQL_ROOT_PASSWORD: datahub
-      MYSQL_USER: datahub
-    hostname: mysql
+      PGUSER: ${POSTGRES_USER:-datahub}
+      POSTGRES_DB: ${POSTGRES_DB:-datahub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-datahub}
+      POSTGRES_USER: ${POSTGRES_USER:-datahub}
+    hostname: postgres
     healthcheck:
       test:
       - CMD-SHELL
-      - mysqladmin ping -h mysql -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      - pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
       timeout: 10s
       interval: 2s
       retries: 5
       start_period: 20s
-    image: mysql:8.2
+    image: ${DATAHUB_POSTGRES_IMAGE:-acryldata/datahub-postgres}:${DATAHUB_POSTGRES_VERSION:-17.5-extensions-v1}
     networks:
       default: null
     ports:
     - mode: ingress
-      target: 3306
-      published: '3306'
+      target: 5432
+      published: ${DATAHUB_MAPPED_POSTGRES_PORT:-5432}
       protocol: tcp
     restart: on-failure
     volumes:
     - type: volume
-      source: mysqldata
-      target: /var/lib/mysql
+      source: postgresdata
+      target: /var/lib/postgresql/data
       volume: {}
   opensearch:
     profiles:
@@ -385,7 +382,7 @@ services:
     ports:
     - mode: ingress
       target: 9200
-      published: '9200'
+      published: ${DATAHUB_MAPPED_ELASTIC_PORT:-9200}
       protocol: tcp
     volumes:
     - type: volume
@@ -406,7 +403,7 @@ services:
       kafka-broker:
         condition: service_healthy
         required: true
-      mysql:
+      postgres:
         condition: service_healthy
         required: true
       opensearch:
@@ -426,11 +423,13 @@ services:
       DATAHUB_SYSTEM_CLIENT_SECRET: ${DATAHUB_SYSTEM_CLIENT_SECRET:-JohnSnowKnowsNothing}
       DATAHUB_TOKEN_SERVICE_SALT: ${DATAHUB_TOKEN_SERVICE_SALT}
       DATAHUB_TOKEN_SERVICE_SIGNING_KEY: ${DATAHUB_TOKEN_SERVICE_SIGNING_KEY}
-      EBEAN_DATASOURCE_DRIVER: com.mysql.jdbc.Driver
-      EBEAN_DATASOURCE_HOST: mysql:3306
-      EBEAN_DATASOURCE_PASSWORD: datahub
-      EBEAN_DATASOURCE_URL: jdbc:mysql://mysql:3306/datahub?verifyServerCertificate=false&useSSL=true&useUnicode=yes&characterEncoding=UTF-8&enabledTLSProtocols=TLSv1.2
-      EBEAN_DATASOURCE_USERNAME: root
+      DATAHUB_MESSAGING_TRANSPORT: kafka
+      EBEAN_DATASOURCE_DRIVER: org.postgresql.Driver
+      EBEAN_DATASOURCE_HOST: postgres:5432
+      EBEAN_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-datahub}
+      EBEAN_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-datahub}
+      EBEAN_DATASOURCE_USERNAME: ${POSTGRES_USER:-datahub}
+      EBEAN_POSTGRES_USE_AWS_IAM_AUTH: 'false'
       ELASTICSEARCH_BUILD_INDICES_CLONE_INDICES: 'false'
       ELASTICSEARCH_HOST: search
       ELASTICSEARCH_IMPLEMENTATION: opensearch
@@ -473,11 +472,11 @@ services:
         create_host_path: true
 networks:
   default:
-    name: datahub_network
+    name: ${DATAHUB_NETWORK_NAME:-datahub_network}
 volumes:
   broker:
-    name: datahub_broker
-  mysqldata:
-    name: datahub_mysqldata
+    name: ${DATAHUB_BROKER_VOLUME_NAME:-datahub_broker}
+  postgresdata:
+    name: ${DATAHUB_POSTGRES_VOLUME_NAME:-datahub_postgresdata}
   osdata:
-    name: datahub_osdata
+    name: ${DATAHUB_OPENSEARCH_VOLUME_NAME:-datahub_osdata}
