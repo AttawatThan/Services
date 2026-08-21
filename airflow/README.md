@@ -12,11 +12,16 @@ The OpenMetadata-managed ingestion service remains disabled.
 | OpenMetadata server | `1.13.3` |
 | `openmetadata-ingestion` | `1.13.3.0` |
 | Airflow OpenLineage provider | `2.17.0` |
+| Boto3 | `1.41.5` |
 
 The image installs the PostgreSQL, Kafka, and S3 extras. REST/OpenAPI ingestion is
 part of the base `openmetadata-ingestion` package. It intentionally does not
 install `openmetadata-managed-apis`, because OpenMetadata does not manage this
 Airflow instance.
+
+`boto3` is explicitly pinned for DAG-level access to S3-compatible object
+storage such as SeaweedFS. The version stays on OpenMetadata 1.13.x's compatible
+dependency line so it can coexist with the ingestion package's `aiobotocore`.
 
 ## Start the services
 

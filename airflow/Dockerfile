@@ -30,8 +30,8 @@ RUN --mount=type=bind,source=requirements-openmetadata.txt,target=/tmp/requireme
     && uv pip check \
     && test "$(airflow version)" = "${AIRFLOW_VERSION}" \
     && test "$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])')" = "3.10" \
-    && python -c "from importlib.metadata import version; assert version('openmetadata-ingestion') == '1.13.3.0'; assert version('apache-airflow-providers-openlineage') == '2.17.0'" \
-    && python -c "from metadata.workflow.metadata import MetadataWorkflow; from metadata.ingestion.source.database.postgres.metadata import PostgresSource; from metadata.ingestion.source.messaging.kafka.metadata import KafkaSource; from metadata.ingestion.source.api.rest.metadata import RestSource; from metadata.ingestion.source.storage.s3.metadata import S3Source; from airflow_provider_openmetadata.lineage.operator import OpenMetadataLineageOperator; from airflow_provider_openmetadata.lineage.callback import failure_callback, success_callback"
+    && python -c "from importlib.metadata import version; assert version('openmetadata-ingestion') == '1.13.3.0'; assert version('apache-airflow-providers-openlineage') == '2.17.0'; assert version('boto3') == '1.41.5'" \
+    && python -c "import boto3; from botocore.config import Config; from metadata.workflow.metadata import MetadataWorkflow; from metadata.ingestion.source.database.postgres.metadata import PostgresSource; from metadata.ingestion.source.messaging.kafka.metadata import KafkaSource; from metadata.ingestion.source.api.rest.metadata import RestSource; from metadata.ingestion.source.storage.s3.metadata import S3Source; from airflow_provider_openmetadata.lineage.operator import OpenMetadataLineageOperator; from airflow_provider_openmetadata.lineage.callback import failure_callback, success_callback"
 
 USER airflow
 WORKDIR /opt/airflow

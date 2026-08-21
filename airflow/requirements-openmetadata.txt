@@ -1,3 +1,7 @@
 # Keep the four-part Python package release aligned with OpenMetadata server 1.13.3.
 # REST/OpenAPI ingestion is included in the base package and has no extra.
 openmetadata-ingestion[postgres,kafka,s3]==1.13.3.0
+
+# OpenMetadata 1.13.x uses the boto3 1.41 dependency line alongside aiobotocore.
+# Pin it explicitly because DAGs use boto3 directly for SeaweedFS S3 access.
+boto3==1.41.5
